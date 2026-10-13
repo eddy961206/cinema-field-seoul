@@ -1,5 +1,13 @@
 # Cinema Field
 
+## 화면 미리보기
+
+실제 브라우저의 좌석 선택·화면비 비교 UI. WebGL이 비활성화되어 2D 대체 화면이며, 정상 3D 렌더 캡처가 아닙니다.
+
+![실제 브라우저의 좌석 선택·화면비 비교 UI. WebGL이 비활성화되어 2D 대체 화면이며, 정상 3D 렌더 캡처가 아닙니다.](docs/screenshots/overview.png)
+
+
+
 A Korean-language, browser-local 3D auditorium exploration app. Static source lives in `dist/`; Three.js is vendored with its MIT license. No build step, backend database, video extraction, analytics or saved user inputs.
 
 ## Data boundaries
