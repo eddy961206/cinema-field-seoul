@@ -1,47 +1,205 @@
-const NATIVE=1.43;
-const SCENE=`<svg xmlns="http://www.w3.org/2000/svg" width="1430" height="1000" viewBox="0 0 1430 1000"><defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#4e7b87"/><stop offset=".55" stop-color="#b6bca3"/><stop offset="1" stop-color="#edbf83"/></linearGradient><linearGradient id="sea" x2="0" y2="1"><stop stop-color="#466f78"/><stop offset="1" stop-color="#142d39"/></linearGradient><linearGradient id="rock" x2="1" y2="1"><stop stop-color="#be936c"/><stop offset=".6" stop-color="#6b7770"/><stop offset="1" stop-color="#29484d"/></linearGradient><linearGradient id="sail" x2="1" y2="1"><stop stop-color="#f2ddaf"/><stop offset="1" stop-color="#8e9d92"/></linearGradient><radialGradient id="glow"><stop stop-color="#ffd896" stop-opacity=".65"/><stop offset="1" stop-color="#ffd896" stop-opacity="0"/></radialGradient><pattern id="ripples" width="170" height="45" patternUnits="userSpaceOnUse"><path d="M0 12h44m21 0h21m23 20h61M7 37h28" stroke="#9ec3bd" stroke-opacity=".18" stroke-width="2"/></pattern></defs><path fill="url(#sky)" d="M0 0h1430v1000H0z"/><ellipse cx="1030" cy="325" rx="380" ry="370" fill="url(#glow)"/><circle cx="1050" cy="312" r="64" fill="#f6d598"/><g fill="none" stroke="#e2d2b2" stroke-width="8" opacity=".28"><path d="M150 145Q410 101 720 152T1390 130M20 229Q190 207 510 231M850 84h320"/></g><path d="M0 520L167 285 235 333 355 211 529 489 674 352 868 545 1085 443 1430 519V720H0" fill="#789092"/><path d="M0 528L167 285 148 404 236 333 202 451 355 211 316 388 371 342 529 489 464 474 389 472 314 511 249 470 182 527 97 501z" fill="#bbc4b4" opacity=".56"/><path d="M0 596L142 489 265 540 378 420 551 622 676 543 800 654H0" fill="#4e777b"/><path d="M0 606Q349 637 690 598T1430 622V1000H0" fill="url(#sea)"/><path d="M0 606Q349 637 690 598T1430 622V1000H0" fill="url(#ripples)"/><path d="M915 598L947 475 1006 443 1023 377 1064 420 1107 333 1175 414 1208 480 1300 494 1337 622 1235 669 1024 667z" fill="url(#rock)"/><path d="M986 548l67-77 56 16 51-59 38 65 71 26 19 29z" fill="#d1ab7c"/><g fill="#d7c3a0" stroke="#827d68" stroke-width="3"><path d="M1050 435h91v-65h-91zM1036 369h119l-60-31z"/><path d="M1060 436v-60h13v60m17 0v-60h13v60m17 0v-60h13v60"/><path d="M1192 539v-62q0-29 27-29t27 29v72h-13v-65q0-19-14-19t-14 19v60z"/><path d="M985 537h59v-49h-59zM979 486h70l-35-18z"/></g><path d="M913 610l80 9 65-32 111 33 90-12 78 17-102 44-211-2z" fill="#314e4c"/><g opacity=".24" fill="#d3ae78"><path d="M967 685h320l-49 16h-254zm68 40h178l-40 11h-115zm17 41h110l-30 8h-59z"/></g><g stroke="#2b3531" stroke-width="5"><path d="M530 778V427M611 781V525"/><path d="M530 463L399 757M530 463l120 294M611 555l89 219" fill="none" stroke-width="2"/><path d="M517 489Q451 535 430 676Q475 699 517 684z" fill="url(#sail)" stroke-width="2"/><path d="M542 480Q624 556 627 681Q581 694 542 679z" fill="url(#sail)" stroke-width="2"/><path d="M621 568Q680 620 682 722l-61-10z" fill="#e0d3ae" stroke-width="2"/><path d="M395 757Q561 802 711 763l-40 54q-149 37-244-11z" fill="#283936"/><path d="M407 773q137 47 285 9" fill="none" stroke="#ba9470"/><path d="M530 429l47 10-47 13" fill="#cc9a65" stroke-width="1"/></g><path d="M375 836q158 45 350-3M409 858q133 31 241 5M470 884h123" fill="none" stroke="#a9b6a5" stroke-width="3" opacity=".34"/><path d="M0 807l67 31 45 52 62-6 82 64 30 52H0zM1430 846l-72 20-53 66-73 11-69 57h267z" fill="#162e32"/><path d="M0 880l53 12 37 58 49-9 53 59H0zM1430 921l-64 30-20 49h84z" fill="#233d3b"/><g fill="none" stroke="#465953" stroke-width="3"><path d="M770 241q11-11 22 0q11-11 22 0M827 213q8-8 16 0q8-8 16 0M698 286q8-8 16 0q8-8 16 0"/></g></svg>`;
-const sceneUrl='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(SCENE);
+const NATIVE = 1.43;
+export const FRAMING_RATIOS = [1.43, 1.85, 1.9, 2.2, 2.39];
 
-export function createFraming(container,{onTexture}={}){
-  let sourceRatio=NATIVE,targetRatio=1.43,screenWidth=31,screenHeight=22.4,destroyed=false;
-  const root=document.createElement('div');root.className='framing';
-  root.innerHTML=`<div class="framing-intro"><h2>같은 장면, 어디까지 보일까</h2><p>화면의 크기와 영화의 화면비는 서로 다릅니다. 원본에 담긴 풍경이 포맷에 따라 어떻게 달라지는지 비교해 보세요.</p></div><div class="framing-layout"><div class="framing-main"><div class="framing-caption"><span>01 / 원본과 보이는 영역</span><span class="framing-source-label"></span></div><div class="framing-preview"><img class="framing-scene" src="${sceneUrl}" alt="높은 산과 바다, 돛배와 절벽 위 신전이 있는 창작 풍경"/><div class="framing-mask framing-mask-top"><span>이 비교에서 제외되는 영역</span></div><div class="framing-mask framing-mask-bottom"></div><div class="framing-window"><span class="framing-frame-label"></span></div></div><div class="framing-metrics" aria-live="polite"><div><strong class="framing-visible"></strong><span>원본 장면 유지</span></div><p class="framing-explanation"></p></div></div><div class="framing-controls"><div class="framing-control-block"><h3>비교할 영화 화면비</h3><div class="framing-ratios" role="group" aria-label="영화 화면비">${[1.43,1.85,1.90,2.20,2.39].map(r=>`<button type="button" data-ratio="${r}" aria-pressed="${r===1.43}"><strong>${r.toFixed(2)}:1</strong><small>${r===1.43?'확장 프레임':r===1.9?'확장 프레임':r===1.85?'플랫 프레임':r===2.2?'와이드 프레임':r===1.85?'플랫 프레임':'시네마스코프'}</small></button>`).join('')}</div></div><div class="framing-control-block"><h3>준비된 소스</h3><div class="framing-sources" role="group" aria-label="원본 소스"><button type="button" data-source="1.43" aria-pressed="true">1.43:1 전체 원본</button><button type="button" data-source="${16/9}" aria-pressed="false">16:9 영상만 있을 때</button></div><p class="framing-source-note">넓은 화면비를 선택하면 원본의 위아래를 중앙 기준으로 가립니다.</p></div><div class="framing-control-block framing-screen-section"><div class="framing-caption"><span>02 / 선택한 상영관에 넣으면</span></div><div class="framing-screen-space"><div class="framing-physical-screen"><img class="framing-output" alt="선택한 화면비를 상영관 스크린에 원래 비율로 맞춘 모습"/></div></div><div class="framing-screen-readout"></div><p>검은 여백은 화면비를 유지하기 위한 공간입니다. 실제 상영은 영사 방식과 마스킹에 따라 달라집니다.</p></div></div></div><div class="framing-footnote"><strong>〈오디세이〉 포맷을 이해하기 위한 원리 비교</strong><p>이 이미지는 직접 만든 설명용 풍경이며 실제 영화 장면이 아닙니다. 모든 일반관이 2.39:1인 것은 아니며, 작품·배급본·장면마다 화면비와 구도가 다릅니다. 여기서는 중앙 크롭을 가정하며 실제 버전별 구도를 재현하지 않습니다.</p><a href="https://www.odysseymovie.com/explore-formats/" target="_blank" rel="noopener noreferrer">영화 공식 포맷 안내 ↗</a></div>`;
+/** Central crop only: a taller output never recovers pixels absent from the source. */
+export function framingGeometry(sourceRatio, targetRatio) {
+  if (
+    ![sourceRatio, targetRatio].every(
+      (ratio) => Number.isFinite(ratio) && ratio > 0,
+    )
+  )
+    throw new RangeError("화면비는 0보다 큰 유한수여야 합니다.");
+  const retainedFraction = Math.min(1, sourceRatio / targetRatio);
+  return {
+    retainedFraction,
+    cropFraction: (1 - retainedFraction) / 2,
+    letterboxFraction: Math.max(0, (1 - targetRatio / sourceRatio) / 2),
+    displayRatio: Math.min(sourceRatio, targetRatio),
+  };
+}
+const SCENE = `<svg xmlns="http://www.w3.org/2000/svg" width="1430" height="1000" viewBox="0 0 1430 1000"><defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#4e7b87"/><stop offset=".55" stop-color="#b6bca3"/><stop offset="1" stop-color="#edbf83"/></linearGradient><linearGradient id="sea" x2="0" y2="1"><stop stop-color="#466f78"/><stop offset="1" stop-color="#142d39"/></linearGradient><linearGradient id="rock" x2="1" y2="1"><stop stop-color="#be936c"/><stop offset=".6" stop-color="#6b7770"/><stop offset="1" stop-color="#29484d"/></linearGradient><linearGradient id="sail" x2="1" y2="1"><stop stop-color="#f2ddaf"/><stop offset="1" stop-color="#8e9d92"/></linearGradient><radialGradient id="glow"><stop stop-color="#ffd896" stop-opacity=".65"/><stop offset="1" stop-color="#ffd896" stop-opacity="0"/></radialGradient><pattern id="ripples" width="170" height="45" patternUnits="userSpaceOnUse"><path d="M0 12h44m21 0h21m23 20h61M7 37h28" stroke="#9ec3bd" stroke-opacity=".18" stroke-width="2"/></pattern></defs><path fill="url(#sky)" d="M0 0h1430v1000H0z"/><ellipse cx="1030" cy="325" rx="380" ry="370" fill="url(#glow)"/><circle cx="1050" cy="312" r="64" fill="#f6d598"/><g fill="none" stroke="#e2d2b2" stroke-width="8" opacity=".28"><path d="M150 145Q410 101 720 152T1390 130M20 229Q190 207 510 231M850 84h320"/></g><path d="M0 520L167 285 235 333 355 211 529 489 674 352 868 545 1085 443 1430 519V720H0" fill="#789092"/><path d="M0 528L167 285 148 404 236 333 202 451 355 211 316 388 371 342 529 489 464 474 389 472 314 511 249 470 182 527 97 501z" fill="#bbc4b4" opacity=".56"/><path d="M0 596L142 489 265 540 378 420 551 622 676 543 800 654H0" fill="#4e777b"/><path d="M0 606Q349 637 690 598T1430 622V1000H0" fill="url(#sea)"/><path d="M0 606Q349 637 690 598T1430 622V1000H0" fill="url(#ripples)"/><path d="M915 598L947 475 1006 443 1023 377 1064 420 1107 333 1175 414 1208 480 1300 494 1337 622 1235 669 1024 667z" fill="url(#rock)"/><path d="M986 548l67-77 56 16 51-59 38 65 71 26 19 29z" fill="#d1ab7c"/><g fill="#d7c3a0" stroke="#827d68" stroke-width="3"><path d="M1050 435h91v-65h-91zM1036 369h119l-60-31z"/><path d="M1060 436v-60h13v60m17 0v-60h13v60m17 0v-60h13v60"/><path d="M1192 539v-62q0-29 27-29t27 29v72h-13v-65q0-19-14-19t-14 19v60z"/><path d="M985 537h59v-49h-59zM979 486h70l-35-18z"/></g><path d="M913 610l80 9 65-32 111 33 90-12 78 17-102 44-211-2z" fill="#314e4c"/><g opacity=".24" fill="#d3ae78"><path d="M967 685h320l-49 16h-254zm68 40h178l-40 11h-115zm17 41h110l-30 8h-59z"/></g><g stroke="#2b3531" stroke-width="5"><path d="M530 778V427M611 781V525"/><path d="M530 463L399 757M530 463l120 294M611 555l89 219" fill="none" stroke-width="2"/><path d="M517 489Q451 535 430 676Q475 699 517 684z" fill="url(#sail)" stroke-width="2"/><path d="M542 480Q624 556 627 681Q581 694 542 679z" fill="url(#sail)" stroke-width="2"/><path d="M621 568Q680 620 682 722l-61-10z" fill="#e0d3ae" stroke-width="2"/><path d="M395 757Q561 802 711 763l-40 54q-149 37-244-11z" fill="#283936"/><path d="M407 773q137 47 285 9" fill="none" stroke="#ba9470"/><path d="M530 429l47 10-47 13" fill="#cc9a65" stroke-width="1"/></g><path d="M375 836q158 45 350-3M409 858q133 31 241 5M470 884h123" fill="none" stroke="#a9b6a5" stroke-width="3" opacity=".34"/><path d="M0 807l67 31 45 52 62-6 82 64 30 52H0zM1430 846l-72 20-53 66-73 11-69 57h267z" fill="#162e32"/><path d="M0 880l53 12 37 58 49-9 53 59H0zM1430 921l-64 30-20 49h84z" fill="#233d3b"/><g fill="none" stroke="#465953" stroke-width="3"><path d="M770 241q11-11 22 0q11-11 22 0M827 213q8-8 16 0q8-8 16 0M698 286q8-8 16 0q8-8 16 0"/></g></svg>`;
+const sceneUrl =
+  "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SCENE);
+
+export function createFraming(container, { onTexture } = {}) {
+  let sourceRatio = NATIVE,
+    targetRatio = 1.43,
+    screenWidth = 31,
+    screenHeight = 22.4,
+    destroyed = false,
+    lastImageKey = "",
+    lastImageUrl = "";
+  const root = document.createElement("div");
+  root.className = "framing";
+  root.innerHTML = `<div class="framing-intro"><h2>같은 장면, 어디까지 보일까</h2><p>화면의 크기와 영화의 화면비는 서로 다릅니다. 같은 소스의 중앙 크롭과 여백을 비교해 보세요. 실제 영화의 포맷별 구도를 재현한 화면은 아닙니다.</p></div><div class="framing-layout"><div class="framing-main"><div class="framing-caption"><span>01 / 원본과 보이는 영역</span><span class="framing-source-label"></span></div><div class="framing-preview"><img class="framing-scene" src="${sceneUrl}" alt="높은 산과 바다, 돛배와 절벽 위 신전이 있는 창작 풍경"/><div class="framing-mask framing-mask-top" aria-hidden="true"><span>이 비교에서 제외되는 영역</span></div><div class="framing-mask framing-mask-bottom" aria-hidden="true"></div><div class="framing-window"><span class="framing-frame-label"></span></div></div><div class="framing-metrics" aria-live="polite" aria-atomic="true"><div><strong class="framing-visible"></strong><span>선택한 원본 장면 유지</span></div><p class="framing-explanation"></p></div></div><div class="framing-controls"><div class="framing-control-block"><h3>비교할 영화 화면비</h3><div class="framing-ratios" role="group" aria-label="영화 화면비">${FRAMING_RATIOS.map((r) => `<button type="button" data-ratio="${r}" aria-pressed="${r === 1.43}"><strong>${r.toFixed(2)}:1</strong><small>${r === 1.43 ? "확장 프레임" : r === 1.9 ? "확장 프레임" : r === 1.85 ? "플랫 프레임" : r === 2.2 ? "와이드 프레임" : "시네마스코프"}</small></button>`).join("")}</div></div><div class="framing-control-block"><h3>준비된 소스</h3><div class="framing-sources" role="group" aria-label="원본 소스"><button type="button" data-source="1.43" aria-pressed="true">1.43:1 전체 원본</button><button type="button" data-source="${16 / 9}" aria-pressed="false">16:9 영상만 있을 때</button></div><p class="framing-source-note">넓은 화면비를 선택하면 원본의 위아래를 중앙 기준으로 가립니다.</p></div><div class="framing-control-block framing-screen-section"><div class="framing-caption"><span>02 / 선택한 상영관에 넣으면</span></div><div class="framing-screen-space"><div class="framing-physical-screen"><img class="framing-output" alt="선택한 화면비를 상영관 스크린에 원래 비율로 맞춘 모습"/></div></div><div class="framing-screen-readout"></div><p>검은 여백은 화면비를 유지하기 위한 공간입니다. 실제 상영은 영사 방식과 마스킹에 따라 달라집니다.</p></div></div></div><div class="framing-footnote"><strong>영화 화면비를 이해하기 위한 원리 비교</strong><p>이 이미지는 직접 만든 설명용 풍경이며 실제 영화 장면이 아닙니다. 모든 일반관이 2.39:1인 것은 아니며, 작품·배급본·장면마다 화면비와 구도가 다릅니다. 여기서는 중앙 크롭을 가정하며 실제 버전별 구도를 재현하지 않습니다.</p><a href="https://www.odysseymovie.com/explore-formats/" target="_blank" rel="noopener noreferrer">〈오디세이〉 공식 포맷 안내 ↗</a></div>`;
   container.append(root);
-  const $=s=>root.querySelector(s), image=new Image();
-  const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
-  const percentage=n=>`${n.toFixed(1)}%`;
-  function update(){
-    if(destroyed)return;
-    const retained=Math.min(1,sourceRatio/targetRatio),crop=(1-retained)/2, sourceH=1430/sourceRatio;
-    const displayRatio=Math.min(sourceRatio,targetRatio);
-    const preview=$('.framing-preview'); preview.style.aspectRatio=String(displayRatio);
-    const picture=$('.framing-scene');
+  const $ = (s) => root.querySelector(s),
+    image = new Image();
+  const canvas = document.createElement("canvas"),
+    ctx = canvas.getContext("2d");
+  const percentage = (n) => `${n.toFixed(1)}%`;
+  function update() {
+    if (destroyed) return;
+    const geometry = framingGeometry(sourceRatio, targetRatio);
+    const {
+        retainedFraction: retained,
+        cropFraction: crop,
+        displayRatio,
+      } = geometry,
+      sourceH = 1430 / sourceRatio;
+    const preview = $(".framing-preview");
+    preview.style.aspectRatio = String(displayRatio);
+    const picture = $(".framing-scene");
     // The source window always preserves pixels: a 16:9 source is a pre-cropped extract.
-    picture.style.width='100%';picture.style.height=`${(displayRatio/NATIVE)*100}%`;picture.style.top='50%';picture.style.transform='translateY(-50%)';
+    picture.style.width = "100%";
+    picture.style.height = `${(displayRatio / NATIVE) * 100}%`;
+    picture.style.top = "50%";
+    picture.style.transform = "translateY(-50%)";
     // Clip the source itself when the chosen source is the shorter 16:9 extract.
-    const sourceBand=(1-displayRatio/sourceRatio)/2;
-    picture.style.clipPath=`inset(${(1-NATIVE/sourceRatio)*50}% 0)`;
-    root.querySelectorAll('.framing-mask').forEach(e=>{e.style.height=`${crop*100}%`;e.hidden=crop===0;});
-    const win=$('.framing-window');win.style.top=`${Math.max(crop,sourceBand)*100}%`;win.style.bottom=`${Math.max(crop,sourceBand)*100}%`;
-    $('.framing-frame-label').textContent=targetRatio.toFixed(2)+':1';
-    $('.framing-source-label').textContent=(sourceRatio===NATIVE?'1.43:1':'16:9')+' SOURCE';
-    $('.framing-visible').textContent=percentage(retained*100);
-    $('.framing-explanation').textContent=crop>0?`선택한 원본 높이의 ${percentage((1-retained)*100)}가 제외됩니다. 위·아래 각각 ${percentage(crop*100)}씩 중앙 크롭한 예시입니다.`:targetRatio<sourceRatio?'원본 전체를 유지합니다. 위아래에 검은 여백이 생기며, 원본에 없는 장면이 새로 나타나지는 않습니다.':'가장 높은 산부터 가까운 물결까지, 준비된 전체 프레임을 그대로 보여줍니다.';
-    $('.framing-source-note').textContent=sourceRatio===NATIVE?'넓은 화면비를 선택하면 원본의 위아래를 중앙 기준으로 가립니다.':'이미 16:9로 잘린 영상입니다. 1.43:1 스크린으로 바꿔도 잘린 위아래는 복원할 수 없습니다.';
-    root.querySelectorAll('[data-ratio]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.ratio)===targetRatio)));
-    root.querySelectorAll('[data-source]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.source)===sourceRatio)));
-    const physical=$('.framing-physical-screen');physical.style.aspectRatio=String(screenWidth/screenHeight);
-    $('.framing-screen-readout').textContent=`물리 스크린 ${screenWidth.toFixed(1)} × ${screenHeight.toFixed(1)} m · ${(screenWidth/screenHeight).toFixed(2)}:1`;
-    if(image.complete&&image.naturalWidth&&ctx){
-      canvas.width=1430;canvas.height=Math.round(1430/targetRatio);ctx.fillStyle='#050709';ctx.fillRect(0,0,canvas.width,canvas.height);
-      const sy=(1000-sourceH)/2;
-      if(targetRatio>=sourceRatio){const h=1430/targetRatio;ctx.drawImage(image,0,sy+(sourceH-h)/2,1430,h,0,0,1430,canvas.height);}
-      else{const h=1430/sourceRatio;ctx.drawImage(image,0,sy,1430,sourceH,0,(canvas.height-h)/2,1430,h);}
-      const url=canvas.toDataURL('image/png');$('.framing-output').src=url;
-      onTexture?.(url,{ratio:targetRatio,sourceRatio,retainedFraction:retained});
+    picture.style.clipPath = `inset(${(1 - NATIVE / sourceRatio) * 50}% 0)`;
+    root.querySelectorAll(".framing-mask").forEach((e) => {
+      e.style.height = `${crop * 100}%`;
+      e.hidden = crop === 0;
+    });
+    const win = $(".framing-window");
+    win.style.top = `${crop * 100}%`;
+    win.style.bottom = `${crop * 100}%`;
+    $(".framing-frame-label").textContent = targetRatio.toFixed(2) + ":1";
+    $(".framing-source-label").textContent =
+      (sourceRatio === NATIVE ? "1.43:1" : "16:9") + " SOURCE";
+    $(".framing-visible").textContent = percentage(retained * 100);
+    $(".framing-explanation").textContent =
+      crop > 0
+        ? `선택한 원본 높이의 ${percentage((1 - retained) * 100)}가 제외됩니다. 위·아래 각각 ${percentage(crop * 100)}씩 중앙 크롭한 예시입니다.`
+        : targetRatio < sourceRatio
+          ? "원본 전체를 유지합니다. 위아래에 검은 여백이 생기며, 원본에 없는 장면이 새로 나타나지는 않습니다."
+          : "가장 높은 산부터 가까운 물결까지, 준비된 전체 프레임을 그대로 보여줍니다.";
+    $(".framing-source-note").textContent =
+      sourceRatio === NATIVE
+        ? "넓은 화면비를 선택하면 원본의 위아래를 중앙 기준으로 가립니다."
+        : "이미 16:9로 잘린 영상입니다. 1.43:1 스크린으로 바꿔도 잘린 위아래는 복원할 수 없습니다.";
+    root
+      .querySelectorAll("[data-ratio]")
+      .forEach((b) =>
+        b.setAttribute(
+          "aria-pressed",
+          String(Number(b.dataset.ratio) === targetRatio),
+        ),
+      );
+    root
+      .querySelectorAll("[data-source]")
+      .forEach((b) =>
+        b.setAttribute(
+          "aria-pressed",
+          String(Number(b.dataset.source) === sourceRatio),
+        ),
+      );
+    const physical = $(".framing-physical-screen");
+    physical.style.aspectRatio = String(screenWidth / screenHeight);
+    $(".framing-screen-readout").textContent =
+      `모델 스크린 ${screenWidth.toFixed(1)} × ${screenHeight.toFixed(1)} m · ${(screenWidth / screenHeight).toFixed(2)}:1`;
+    if (image.complete && image.naturalWidth && ctx) {
+      const imageKey = sourceRatio + ":" + targetRatio;
+      if (imageKey !== lastImageKey) {
+        canvas.width = 1430;
+        canvas.height = Math.round(1430 / targetRatio);
+        ctx.fillStyle = "#050709";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const sy = (1000 - sourceH) / 2;
+        if (targetRatio >= sourceRatio) {
+          const h = 1430 / targetRatio;
+          ctx.drawImage(
+            image,
+            0,
+            sy + (sourceH - h) / 2,
+            1430,
+            h,
+            0,
+            0,
+            1430,
+            canvas.height,
+          );
+        } else {
+          const h = 1430 / sourceRatio;
+          ctx.drawImage(
+            image,
+            0,
+            sy,
+            1430,
+            sourceH,
+            0,
+            (canvas.height - h) / 2,
+            1430,
+            h,
+          );
+        }
+        lastImageUrl = canvas.toDataURL("image/png");
+        lastImageKey = imageKey;
+        $(".framing-output").src = lastImageUrl;
+      }
+      onTexture?.(lastImageUrl, {
+        ratio: targetRatio,
+        sourceRatio,
+        retainedFraction: retained,
+      });
     }
   }
-  function click(e){const r=e.target.closest('[data-ratio]'),s=e.target.closest('[data-source]');if(r)targetRatio=Number(r.dataset.ratio);else if(s)sourceRatio=Number(s.dataset.source);else return;update();}
-  root.addEventListener('click',click);image.onload=update;image.src=sceneUrl;update();
-  return {setRatio(ratio){const value=Number(ratio);if([1.43,1.85,1.90,2.20,2.39].includes(value)){targetRatio=value;update();}},setSource(ratio){const value=Number(ratio);if(value===NATIVE||Math.abs(value-16/9)<0.000001){sourceRatio=value===NATIVE?NATIVE:16/9;update();}},setScreen(width,height){if(Number.isFinite(Number(width))&&Number.isFinite(Number(height))&&Number(width)>0&&Number(height)>0){screenWidth=Number(width);screenHeight=Number(height);update();}},getState(){return {sourceRatio,targetRatio,screenWidth,screenHeight,retainedFraction:Math.min(1,sourceRatio/targetRatio)};},destroy(){destroyed=true;root.removeEventListener('click',click);image.onload=null;root.remove();}};
+  function setSource(ratio) {
+    const value = Number(ratio);
+    if (value === NATIVE || Math.abs(value - 16 / 9) < 0.000001) {
+      sourceRatio = value === NATIVE ? NATIVE : 16 / 9;
+      update();
+    }
+  }
+  function click(e) {
+    const r = e.target.closest("[data-ratio]"),
+      s = e.target.closest("[data-source]");
+    if (r) targetRatio = Number(r.dataset.ratio);
+    else if (s) sourceRatio = Number(s.dataset.source);
+    else return;
+    update();
+  }
+  root.addEventListener("click", click);
+  image.onload = update;
+  image.src = sceneUrl;
+  update();
+  return {
+    setRatio(ratio) {
+      const value = Number(ratio);
+      if (FRAMING_RATIOS.includes(value)) {
+        targetRatio = value;
+        update();
+      }
+    },
+    setSource,
+    setSourceRatio: setSource,
+    setScreen(width, height) {
+      if (
+        Number.isFinite(Number(width)) &&
+        Number.isFinite(Number(height)) &&
+        Number(width) > 0 &&
+        Number(height) > 0
+      ) {
+        screenWidth = Number(width);
+        screenHeight = Number(height);
+        update();
+      }
+    },
+    getState() {
+      return {
+        sourceRatio,
+        targetRatio,
+        screenWidth,
+        screenHeight,
+        retainedFraction: framingGeometry(sourceRatio, targetRatio)
+          .retainedFraction,
+      };
+    },
+    destroy() {
+      destroyed = true;
+      root.removeEventListener("click", click);
+      image.onload = null;
+      root.remove();
+    },
+  };
 }

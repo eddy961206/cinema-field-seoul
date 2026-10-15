@@ -1,3 +1,567 @@
-<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#171819"><title>Cinema Field · 서울 경기 좌석 탐험</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="framing.css"></head><body>
-<div id="app"><aside id="sidebar"><header><a class="brand" href="./">CINEMA FIELD</a><span>서울 · 경기</span><button id="collapse" aria-label="패널 접기">−</button></header><div class="sidebar-content"><h1>어디에 앉을까요?</h1><p class="intro">좌석을 고르고, 시선을 움직이고.<br>큰 화면까지의 거리를 비교해 보세요.</p><section class="venue"><label for="search">영화관 찾기</label><input id="search" placeholder="이름 또는 지역 검색" type="search"><label for="venue">영화관 · 상영관</label><select id="venue"></select><div id="venue-meta"></div><p class="notice">ⓘ 모든 좌석 배치·거리·단차는 추정 모델입니다. 실제 예매용 좌석표가 아닙니다.</p></section><button id="open-framing" class="framing-opener">화면비 원리·출처 보기 ↗</button><section class="selection"><div class="screen-line">SCREEN</div><div id="seatmap" role="group" aria-label="추정 모델 좌석 선택"></div><div class="seat-summary"><div><small>선택한 모델 좌석</small><strong id="seat-label">8–13</strong></div><span id="seat-detail">중앙에서 비교하기</span></div><button class="primary" id="sit">이 좌석에 앉기 <span>↗</span></button><div class="row-seat"><label>행<select id="row"></select></label><label>좌석<select id="seat"></select></label></div></section><details open><summary>출처와 모델 가정</summary><div id="facts"></div><p class="fine">실측된 상영관이 없습니다. 장애인 지정 위치는 빈 표시 공간으로 단순화했으며 실제 의자 유무를 확인한 것은 아닙니다. 확인된 스크린·정원 정보와 가상의 공간 모델을 분리해 표시합니다.</p><div id="sources"></div></details><details id="calibration"><summary>공간 가정 조정</summary><label>첫 줄–스크린 거리 <output id="front-value">10 m</output><input id="front" type="range" min="5" max="20" step="0.5" value="10"></label><label>행 간격 <output id="pitch-value">1.3 m</output><input id="pitch" type="range" min="0.9" max="2.2" step="0.1" value="1.3"></label><label>행 단차 <output id="rise-value">0.35 m</output><input id="rise" type="range" min="0.15" max="0.7" step="0.05" value="0.35"></label><button id="reset-model">기본 가정으로 복원</button></details><details><summary>이용 방법과 한계</summary><p class="fine">좌석표 또는 3D 좌석을 눌러 선택하세요. 화면 드래그로 시선을 돌립니다. 걸어보기에서는 WASD 또는 조이스틱을 사용합니다. 이동 조이스틱을 움직인 채 다른 손으로 화면을 드래그할 수 있습니다.</p><p class="fine">같은 카메라 화각으로 좌석을 비교합니다. 사람의 시야·양안 깊이·HDR·음향·실제 관객 가림은 재현하지 않습니다. ScreenX 측면 영상, IMAX 전용 투사도 재현하지 않습니다.</p><p class="fine">YouTube 공식 플레이어를 사용합니다. 원본의 화면비와 레터박스가 유지됩니다. 일부 영상은 퍼가기·지역·연령·로그인 제한으로 재생되지 않습니다.</p></details><footer>확인 기준 2026.10 · 예약·공식 안내 서비스 아님</footer></div></aside>
-<main id="stage" aria-label="3D 상영관"><div id="scene"><img id="fallback-comparison" alt="선택한 스크린에 맞춘 설명용 화면비 비교" hidden><div id="screen-player" hidden><div id="video-frame"><div id="youtube-player"></div></div></div></div><div class="top-tools" role="group" aria-label="시점 모드"><button data-mode="seat">좌석 시점</button><button data-mode="walk">걸어보기</button><button data-mode="orbit" class="active">전체 보기</button></div><div class="scene-heading"><span id="room-title">SUPER PLEX</span><small>출처 기반 크기 · 추정 공간</small></div><div class="stage-framing"><span>스크린 안에서 비교</span><div role="group" aria-label="상영관 스크린 화면비"><button data-stage-ratio="1.43" aria-pressed="false">1.43</button><button data-stage-ratio="1.85" aria-pressed="false">1.85</button><button data-stage-ratio="1.9" aria-pressed="false">1.90</button><button data-stage-ratio="2.2" aria-pressed="false">2.20</button><button data-stage-ratio="2.39" aria-pressed="false">2.39</button></div><button id="show-comparison">비교 장면</button><small id="stage-framing-note">설명용 1.43 원본 · 같은 좌석과 카메라 유지</small></div><div id="engine-error" hidden>이 브라우저에서 WebGL을 사용할 수 없어 3D 시점을 열지 못했습니다. 아래에서는 영상을 2D로 확인할 수 있습니다. 3D 탐험은 WebGL을 지원하는 브라우저가 필요합니다.</div><div id="view-state" aria-live="polite">상영관 불러오는 중</div><div class="bottom-tools"><div class="sample-picker"><label for="sample-select">샘플 영상</label><select id="sample-select"><option value="aqz-KE-bpKQ">Big Buck Bunny · 애니메이션</option><option value="eRsGyueVLvQ">Sintel · 판타지 애니메이션</option><option value="WhWc3b3KhnY">Spring · 자연·판타지 애니메이션</option></select><button id="sample-video">선택 영상 열기</button></div><small class="sample-disclaimer">Blender 공식 영상 · IMAX 전용 마스터가 아닙니다</small><details class="custom-video"><summary>직접 YouTube 주소 입력</summary><form id="video-form"><label class="sr-only" for="video-url">YouTube 영상 URL</label><input id="video-url" placeholder="YouTube 영상 URL 붙여넣기" autocomplete="off"><button type="submit">영상 열기</button></form></details><div class="video-actions"><button id="close-video" hidden>영상 닫기</button><a id="youtube-link" href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer" hidden>YouTube에서 열기 ↗</a></div><p id="video-status" role="status">영상을 열면 상영관 스크린에 공식 YouTube 플레이어가 나타납니다</p></div><div class="navigation"><div class="walk-controls" role="group" aria-label="이동 조이스틱" hidden><span class="walk-hint">잡고 끌어서 이동</span><button id="move-stick" type="button" aria-label="이동 조이스틱. 끌어서 방향과 속도 조절. 키보드는 방향키 또는 WASD." aria-describedby="movement-feedback"><span class="stick-axis axis-x"></span><span class="stick-axis axis-y"></span><span id="stick-knob"></span></button><span id="movement-feedback" role="status" class="move-feedback">놓으면 정지 · 시선은 화면 드래그</span></div></div><button id="panel-open" aria-label="좌석 패널 열기">좌석 선택</button></main></div><dialog id="framing-dialog"><div class="framing-dialog-head"><span>화면비 비교</span><button id="close-framing" aria-label="화면비 비교 닫기">닫기 ×</button></div><div id="framing-content"></div></dialog><script type="module" src="app.js"></script></body></html>
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#141b1d" />
+    <meta
+      name="description"
+      content="서울·경기 특별관을 둘러보고, 3D 좌석 시야와 화면비를 비교해 보세요. 출처가 있는 상영관 정보, 좌석 비교와 공유 링크를 제공합니다. 실제 예매용 좌석표가 아닌 가정 모델입니다."
+    />
+    <meta
+      property="og:title"
+      content="Cinema Field · 나에게 맞는 영화의 자리"
+    />
+    <meta
+      property="og:description"
+      content="서울·경기 특별관 탐험, 좌석 시야와 화면비 비교. 같은 장면도 앉는 자리에 따라 달라지니까."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta
+      property="og:url"
+      content="https://eddy961206.github.io/cinema-field-seoul/"
+    />
+    <meta
+      property="og:image"
+      content="https://eddy961206.github.io/cinema-field-seoul/social-preview.jpg"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link
+      rel="canonical"
+      href="https://eddy961206.github.io/cinema-field-seoul/"
+    />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <title>Cinema Field · 서울·경기 특별관 좌석 비교</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="framing.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#stage">상영관 화면으로 건너뛰기</a>
+    <noscript
+      ><div class="startup-error">
+        좌석 비교를 사용하려면 브라우저의 JavaScript를 켜 줘.
+        <a href="https://github.com/eddy961206/cinema-field-seoul"
+          >프로젝트와 조사 자료 보기</a
+        >
+      </div></noscript
+    >
+    <div
+      id="startup-error"
+      class="startup-error"
+      tabindex="-1"
+      role="alert"
+      hidden
+    >
+      <strong>상영관을 불러오지 못했어.</strong>
+      <p>네트워크 연결을 확인하고 다시 시도해 줘.</p>
+      <button id="retry-load">다시 불러오기</button>
+    </div>
+    <div id="app">
+      <button
+        id="panel-backdrop"
+        aria-label="좌석 패널 닫기"
+        tabindex="-1"
+        hidden
+      ></button>
+      <aside id="sidebar" aria-label="상영관과 모델 좌석 선택">
+        <header>
+          <a class="brand" href="./"
+            ><span class="brand-symbol" aria-hidden="true">◧</span> CINEMA
+            FIELD</a
+          ><span class="edition">SEOUL / GYEONGGI</span
+          ><button id="collapse" aria-label="좌석 패널 닫기">×</button>
+        </header>
+        <div class="sidebar-content">
+          <div class="intro-block">
+            <p class="eyebrow">A SEAT FOR YOUR NEXT FILM</p>
+            <h1>영화가 달라지는 자리.</h1>
+            <p class="intro">상영관을 둘러보고, 나의 시야를 찾아봐.</p>
+          </div>
+          <section class="venue" aria-labelledby="find-title">
+            <div class="section-title">
+              <h2 id="find-title"><span>01</span> 상영관 찾기</h2>
+              <button id="clear-search" class="text-button" hidden>
+                초기화
+              </button>
+            </div>
+            <label class="sr-only" for="search"
+              >영화관 이름 또는 지역 검색</label
+            ><input
+              id="search"
+              placeholder="영화관 이름, 지역으로 검색"
+              type="search"
+              autocomplete="off"
+            />
+            <div class="filter-row">
+              <label
+                >지역<select id="region-filter">
+                  <option value="">모든 지역</option>
+                </select></label
+              ><label
+                >상영 포맷<select id="format-filter">
+                  <option value="">모든 포맷</option>
+                </select></label
+              >
+            </div>
+            <label class="sr-only" for="venue">영화관 · 상영관</label
+            ><select id="venue"></select>
+            <div id="venue-meta" role="status"></div>
+            <div id="empty-results" class="empty-state" hidden>
+              <p>다른 이름이나 지역으로 찾아봐.</p>
+              <button id="empty-reset">모든 상영관 보기</button>
+              <p class="fine">
+                3D 화면에는 마지막으로 선택한 상영관이 남아 있어.
+              </p>
+            </div>
+          </section>
+          <div id="room-content">
+            <section class="room-info">
+              <div class="room-kicker">
+                <span id="room-region"></span
+                ><span class="badge" id="evidence-badge"></span>
+              </div>
+              <h2 id="room-name"></h2>
+              <p id="room-summary"></p>
+              <div class="room-stats">
+                <div>
+                  <small>보고된 스크린 · m</small
+                  ><strong id="screen-stat"></strong>
+                </div>
+                <div>
+                  <small>보고된 정원 · 석</small
+                  ><strong id="capacity-stat"></strong>
+                </div>
+              </div>
+              <p class="notice"></p>
+              <details class="visit-details">
+                <summary>방문 정보와 공식 안내</summary>
+                <p id="room-address"></p>
+                <p id="room-transport"></p>
+                <div id="visit-links" class="link-row"></div>
+                <p id="verified-date" class="fine"></p>
+                <p id="verification-note" class="fine"></p>
+              </details>
+            </section>
+            <section class="selection" aria-labelledby="seat-title">
+              <div class="section-title">
+                <h2 id="seat-title"><span>02</span> 좌석에서 바라보기</h2>
+                <button id="zoom-map" class="text-button" aria-pressed="false">
+                  좌석표 확대
+                </button>
+              </div>
+              <div class="seat-presets" aria-label="모델 좌석 빠른 선택">
+                <button data-preset="0.25">앞쪽 중앙</button
+                ><button data-preset="0.5">가운데</button
+                ><button data-preset="0.8">뒤쪽 중앙</button>
+              </div>
+              <div class="seatmap-scroll" id="seatmap-scroll">
+                <div class="map-inner">
+                  <div class="screen-line">SCREEN</div>
+                  <div
+                    id="seatmap"
+                    role="group"
+                    aria-label="모델 좌석 선택"
+                  ></div>
+                </div>
+              </div>
+              <div class="map-legend">
+                <span><i></i>모델 위치</span
+                ><span><i class="legend-selected"></i>선택</span
+                ><span><i class="legend-accessible"></i>휠체어 위치</span>
+              </div>
+              <p id="seat-label-note" class="label-note"></p>
+              <p class="map-help">
+                방향키로 이동 · 행/위치 메뉴로도 선택할 수 있어.
+              </p>
+              <div class="seat-summary">
+                <div>
+                  <small>선택한 좌석 표기</small
+                  ><strong id="seat-label"></strong>
+                </div>
+                <span id="seat-detail"></span>
+              </div>
+              <div class="row-seat">
+                <label>앞에서 행<select id="row"></select></label
+                ><label>좌석 표기<select id="seat"></select></label>
+              </div>
+              <div class="seat-metrics">
+                <div>
+                  <small>스크린까지</small
+                  ><strong id="metric-distance"></strong>
+                </div>
+                <div>
+                  <small>가로 시야각</small><strong id="metric-angle"></strong>
+                </div>
+                <div>
+                  <small>중앙에서</small><strong id="metric-offset"></strong>
+                </div>
+              </div>
+              <p class="fine">
+                가정 모델의 계산값이야. 실제 관람 경험이나 명당 순위가 아니야.
+              </p>
+              <button class="primary" id="sit">
+                이 좌석에 앉기 <span>↗</span></button
+              ><button class="secondary" id="add-comparison">
+                + 이 좌석을 비교에 담기
+              </button>
+            </section>
+          </div>
+          <section class="comparison-section" aria-labelledby="compare-title">
+            <div class="section-title">
+              <h2 id="compare-title"><span>03</span> 나란히 비교하기</h2>
+              <span id="compare-count" class="count"></span>
+            </div>
+            <p id="comparison-empty" class="muted">
+              고민되는 좌석을 최대 3개 담아봐.<br />다른 상영관의 좌석도 함께
+              비교할 수 있어.
+            </p>
+            <ul id="comparison-list"></ul>
+            <button id="compare-open" class="secondary" disabled>
+              좌석 비교표 열기
+            </button>
+            <p class="fine">
+              비교 목록은 이 탭에서만 유지돼. 새로고침하면 초기화돼.
+            </p>
+          </section>
+          <button id="open-framing" class="framing-opener">
+            <span>같은 장면, 다른 화면비</span
+            ><small>1.43부터 2.39까지 원리와 출처 살펴보기 ↗</small>
+          </button>
+          <section
+            id="presence-panel"
+            class="presence-panel"
+            aria-labelledby="presence-title"
+          >
+            <div class="section-heading">
+              <h3 id="presence-title">함께 둘러보기</h3>
+              <span id="presence-count">연결 준비</span>
+            </div>
+            <p>
+              <strong id="presence-group">상영관 공개 모임</strong> ·
+              <span id="presence-status" role="status">연결 준비 중</span>
+            </p>
+            <ul id="presence-list" aria-label="이 상영관에 연결된 접속자"></ul>
+            <div class="presence-actions">
+              <button id="new-party">새 모임 링크</button
+              ><button id="presence-toggle">모임 나가기</button
+              ><button id="presence-retry" hidden>다시 연결</button>
+            </div>
+            <p class="fine">
+              같은 모임·상영관에 연결된 실제 접속자의 선택 좌석을 캐릭터로
+              보여줘. 탭 하나를 한 명으로 표시해. 좌석 중복 선택은 가능해.
+            </p>
+            <details>
+              <summary>연결과 개인정보</summary>
+              <p class="fine">
+                카메라·마이크·이름 없이 임시 ID와 선택 좌석만 서로 공유해. 기본
+                모임은 공개되어 있어. ‘새 모임 링크’는 그 링크를 가진 사람끼리
+                만나기 위한 기능이며 로그인 보안은 없어. 좌석 정보는 암호화해
+                공개 중계 서비스로 전달해. 중계 서비스에는 IP 등 연결 정보가
+                노출될 수 있어. 중계 서비스나 회사망 상태에 따라 연결이 제한될
+                수 있어. 잠든 탭이나 닫힌 탭은 약 45초 뒤 목록에서 사라질 수
+                있어. 영상과 카메라 이동은 동기화하지 않아.
+              </p>
+            </details>
+          </section>
+          <details>
+            <summary>출처와 모델 가정</summary>
+            <div id="facts"></div>
+            <p id="dimension-note" class="fine"></p>
+            <p class="fine">
+              실측된 상영관은 없어. 휠체어 지정 위치는 빈 공간으로 표현하며 실제
+              시설과 동선은 공식 안내를 확인해 줘. 출처의 작성 시점과 현재 운영
+              상태는 다를 수 있어.
+            </p>
+            <div id="sources"></div>
+          </details>
+          <details id="calibration">
+            <summary>공간 가정 직접 조정</summary>
+            <p class="fine">
+              거리와 단차를 바꾸면 시야도 달라져. 화면의 수치는 조정한 가정에
+              따라 계산돼.
+            </p>
+            <label
+              >첫 줄–스크린 거리 <output id="front-value">10 m</output
+              ><input
+                id="front"
+                type="range"
+                min="5"
+                max="20"
+                step="0.5"
+                value="10" /></label
+            ><label
+              >행 간격 <output id="pitch-value">1.3 m</output
+              ><input
+                id="pitch"
+                type="range"
+                min="0.9"
+                max="2.2"
+                step="0.1"
+                value="1.3" /></label
+            ><label
+              >행 단차 <output id="rise-value">0.35 m</output
+              ><input
+                id="rise"
+                type="range"
+                min="0.15"
+                max="0.7"
+                step="0.05"
+                value="0.35" /></label
+            ><button id="reset-model">기본 가정으로 복원</button>
+          </details>
+          <details>
+            <summary>처음 이용한다면</summary>
+            <ol class="help-steps">
+              <li>
+                상영관을 고르고 좌석표나 행·위치 메뉴에서 모델 좌석을 선택해.
+              </li>
+              <li>
+                ‘이 좌석에 앉기’를 눌러 시야를 확인해. 화면을 드래그하면 둘러볼
+                수 있어.
+              </li>
+              <li>
+                걸어보기에서는 화면을 선택한 뒤 WASD·방향키 또는 조이스틱으로
+                이동해.
+              </li>
+              <li>
+                화면비를 바꾸거나 비교표에 담아 차이를 살펴봐. ‘링크 공유’로
+                현재 설정을 전달할 수 있어.
+              </li>
+            </ol>
+            <p class="fine">
+              고정 카메라 화각으로 비교해. 양안 시야·HDR·음향·관객 가림·실제
+              좌석 안락함·ScreenX 측면 영상은 재현하지 않아. 화면비 전환은
+              설명용 창작 장면에 적용돼.
+            </p>
+            <p class="fine">
+              YouTube는 영상을 열 때만 연결해. 원본 영상에 없는 장면은 복원할 수
+              없어. 일부 영상은 퍼가기·지역·연령·로그인 제한이 있어.
+            </p>
+          </details>
+          <footer>
+            독립적으로 만든 영화관 탐험 도구 · 공식 예매 서비스 아님<br /><a
+              href="https://github.com/eddy961206/cinema-field-seoul/blob/main/docs/RESEARCH.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              >조사 기록</a
+            >
+            ·
+            <a
+              href="https://github.com/eddy961206/cinema-field-seoul/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              >정보 수정 제안</a
+            >
+          </footer>
+        </div>
+      </aside>
+      <main id="stage" tabindex="-1" aria-label="3D 상영관 미리보기">
+        <div id="scene">
+          <img
+            id="fallback-comparison"
+            alt="선택한 모델 스크린 안에서의 설명용 화면비 비교"
+            hidden
+          />
+          <div id="screen-player" hidden>
+            <div id="video-frame"><div id="youtube-player"></div></div>
+          </div>
+        </div>
+        <button id="panel-open" aria-label="좌석과 상영관 정보 열기">
+          ☰ 좌석·정보
+        </button>
+        <div class="top-tools" role="group" aria-label="시점 모드">
+          <button data-mode="seat">좌석 시점</button
+          ><button data-mode="walk">걸어보기</button
+          ><button data-mode="orbit" class="active">전체 보기</button>
+        </div>
+        <button id="share-view" class="stage-action">링크 공유 ↗</button>
+        <div class="scene-heading">
+          <span id="room-format"></span>
+          <h2 id="room-title"></h2>
+          <small>출처 기반 정보 · 가정으로 만든 공간</small
+          ><button id="presence-badge" class="presence-badge">
+            접속자 연결 중
+          </button>
+        </div>
+        <div class="stage-framing">
+          <span>설명용 장면의 화면비</span>
+          <div role="group" aria-label="상영관 스크린 화면비">
+            <button data-stage-ratio="1.43" aria-pressed="false">1.43</button
+            ><button data-stage-ratio="1.85" aria-pressed="false">1.85</button
+            ><button data-stage-ratio="1.9" aria-pressed="false">1.90</button
+            ><button data-stage-ratio="2.2" aria-pressed="false">2.20</button
+            ><button data-stage-ratio="2.39" aria-pressed="false">2.39</button>
+          </div>
+          <button id="show-comparison">비교 장면</button
+          ><small id="stage-framing-note"
+            >설명용 1.43 원본 · 같은 좌석과 카메라 유지</small
+          >
+        </div>
+        <div id="startup-status" role="status">상영관을 준비하고 있어…</div>
+        <div id="engine-error" role="status" hidden></div>
+        <div class="label-tools">
+          <button id="see-seats">좌석 배치 보기</button
+          ><button id="toggle-labels" aria-pressed="true">의자 번호 켜짐</button
+          ><small>M = 모델 번호 · 초록 표식 = 자료 확인</small>
+        </div>
+        <div class="view-caption">
+          <strong id="selected-context"></strong>
+          <div id="view-state"></div>
+          <button id="look-screen">스크린 바라보기 ⤴</button>
+        </div>
+        <details class="bottom-tools">
+          <summary>
+            <span>영상으로 확인하기</span
+            ><small
+              >YouTube 공식 플레이어 <span aria-hidden="true">＋</span></small
+            >
+          </summary>
+          <div class="video-panel">
+            <div class="sample-picker">
+              <label class="sr-only" for="sample-select">샘플 영상</label
+              ><select id="sample-select">
+                <option value="aqz-KE-bpKQ">Big Buck Bunny · 애니메이션</option>
+                <option value="eRsGyueVLvQ">Sintel · 판타지 애니메이션</option>
+                <option value="WhWc3b3KhnY">
+                  Spring · 자연·판타지 애니메이션
+                </option></select
+              ><button id="sample-video">영상 열기</button>
+            </div>
+            <small class="sample-disclaimer"
+              >Blender 공식 영상 · IMAX 전용 마스터 아님</small
+            >
+            <details class="custom-video">
+              <summary>직접 YouTube 주소 입력</summary>
+              <form id="video-form">
+                <label class="sr-only" for="video-url">YouTube 영상 URL</label
+                ><input
+                  id="video-url"
+                  placeholder="YouTube 주소 또는 영상 ID"
+                  autocomplete="off"
+                  aria-describedby="video-status"
+                /><button type="submit">열기</button>
+              </form>
+            </details>
+            <div class="video-actions">
+              <button id="close-video" hidden>영상 닫기</button
+              ><a
+                id="youtube-link"
+                href="https://www.youtube.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                hidden
+                >YouTube에서 열기 ↗</a
+              >
+            </div>
+            <p id="video-status" role="status">
+              영상을 열면 YouTube에 연결돼. 입력한 주소는 저장하지 않아.
+            </p>
+          </div>
+        </details>
+        <div class="navigation">
+          <div
+            class="walk-controls"
+            role="group"
+            aria-label="이동 조이스틱"
+            hidden
+          >
+            <span class="walk-hint">끌어서 이동 · 화면 드래그로 시선</span
+            ><button
+              id="move-stick"
+              type="button"
+              aria-label="이동 조이스틱. 방향키 또는 WASD로도 이동."
+              aria-describedby="movement-feedback"
+            >
+              <span class="stick-axis axis-x"></span
+              ><span class="stick-axis axis-y"></span
+              ><span id="stick-knob"></span></button
+            ><span id="movement-feedback" role="status" class="move-feedback"
+              >놓으면 정지</span
+            >
+          </div>
+        </div>
+      </main>
+    </div>
+    <div id="announcement" role="status" hidden></div>
+    <dialog id="framing-dialog" aria-label="화면비 원리 비교">
+      <div class="framing-dialog-head">
+        <span>FRAME LAB / 화면비 이해하기</span
+        ><button id="close-framing" aria-label="화면비 비교 닫기">
+          닫기 ×
+        </button>
+      </div>
+      <div id="framing-content"></div>
+    </dialog>
+    <dialog id="compare-dialog" aria-labelledby="comparison-heading">
+      <div class="dialog-head">
+        <div>
+          <p class="eyebrow">YOUR SHORTLIST</p>
+          <h2 id="comparison-heading">내가 고른 자리들</h2>
+        </div>
+        <button
+          data-close-dialog="compare-dialog"
+          aria-label="좌석 비교표 닫기"
+        >
+          닫기 ×
+        </button>
+      </div>
+      <div class="dialog-body">
+        <p>
+          가로 시야각이 클수록 모델에서 화면이 넓게 보여. 실제 관람 만족도를
+          뜻하지는 않아.
+        </p>
+        <div class="table-scroll">
+          <table>
+            <caption class="sr-only">
+              선택한 모델 좌석 비교
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">상영관</th>
+                <th scope="col">모델 좌석</th>
+                <th scope="col">스크린</th>
+                <th scope="col">앞쪽 거리</th>
+                <th scope="col">가로 시야각</th>
+                <th scope="col">중앙 편차</th>
+                <th scope="col">가정: 첫 줄 / 간격 / 단차</th>
+                <th scope="col">선택</th>
+              </tr>
+            </thead>
+            <tbody id="comparison-body"></tbody>
+          </table>
+        </div>
+        <p class="fine">
+          자료의 시점과 신뢰도가 달라. 치수 미확인 상영관은 공통 28 × 12 m
+          모델이므로 실제 크기 비교에 사용하면 안 돼.
+        </p>
+      </div>
+    </dialog>
+    <dialog id="share-dialog" aria-labelledby="share-heading">
+      <div class="dialog-head">
+        <h2 id="share-heading">같은 자리에서 만나기</h2>
+        <button data-close-dialog="share-dialog" aria-label="공유 창 닫기">
+          닫기 ×
+        </button>
+      </div>
+      <div class="dialog-body">
+        <label for="share-url">현재 설정을 담은 링크</label
+        ><input id="share-url" readonly type="url" /><button
+          id="copy-share"
+          class="primary"
+        >
+          링크 복사
+        </button>
+        <p id="share-status" role="status"></p>
+        <p class="fine">
+          링크를 연 뒤 같은 상영관에서 만나면 캐릭터가 보여. 비교 목록과 YouTube
+          주소는 공유 링크에 포함되지 않아. 로그인 없이 열 수 있어.
+        </p>
+      </div>
+    </dialog>
+    <script type="module" src="boot.js"></script>
+  </body>
+</html>
